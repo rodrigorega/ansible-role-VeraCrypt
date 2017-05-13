@@ -1,0 +1,54 @@
+---
+# tasks file for VeraCrypt
+
+- name: "Compose download URL"
+  shell: curl -s "{{ veracrypt_download_page_url }}" | egrep -i "veracrypt\-.*[0-9]\-setup\.tar\.bz2" | awk -F '"' '{print $2}'
+  register: veracrypt_download_file
+  tags:
+    - veracrypt_install
+
+- name: "Compose filename"
+  shell: url="{{ veracrypt_download_file.stdout }}"; echo "${url##*/}"
+  register: veracrypt_installer_filename
+  tags:
+    - veracrypt_install
+
+- name: "Create work dir"
+  file:
+    path: "{{ veracrypt_install_dir }}"
+    state: directory
+  tags:
+    - veracrypt_install
+
+- name: "Download VeraCrypt"
+  get_url:
+    url: "{{ veracrypt_download_file.stdout }}"
+    dest: "{{ veracrypt_install_dir}}/{{ veracrypt_installer_filename.stdout }}"
+  tags:
+    - veracrypt_install
+
+- name: "Uncompress installer"
+  unarchive:
+    src: "{{ veracrypt_install_dir}}/{{ veracrypt_installer_filename.stdout }}"
+    dest: "{{ veracrypt_install_dir}}"
+    remote_src: True
+  tags:
+    - veracrypt_install
+
+- name: "Detect installer file"
+  shell: "ls {{ veracrypt_install_dir}}/veracrypt-*-setup-gui-x64 | tail -n 1"
+  register: veracrypt_installer_script
+  tags:
+    - veracrypt_install
+
+- name: "Install VeraCrypt"
+  shell: "{{ veracrypt_installer_script.stdout }}"
+  tags:
+    - veracrypt_install
+
+- name: "Delete work dir"
+  file:
+    path: "{{ veracrypt_install_dir }}"
+    state: absent
+  tags:
+    - veracrypt_install

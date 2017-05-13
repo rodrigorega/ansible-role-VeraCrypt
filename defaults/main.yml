@@ -1,0 +1,5 @@
+---
+# defaults file for VeraCrypt
+
+veracrypt_download_page_url: "https://launchpad.net/veracrypt"
+veracrypt_install_dir: "/tmp/veracrypt_ansible"
