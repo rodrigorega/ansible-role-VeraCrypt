@@ -1,42 +1,49 @@
 ---
 # tasks file for VeraCrypt
 
-- name: "Compose download URL"
-  shell: curl -s "{{ veracrypt_download_page_url }}" | egrep -i "veracrypt\-.*[0-9]\-setup\.tar\.bz2" | awk -F '"' '{print $2}'
-  register: veracrypt_download_file
+- name: "Create temporary directory"
+  tempfile:
+    state: directory
+  register: veracrypt_install_dir
+  tags:
+    - veracrypt_install
+
+- name: "Fetch download page"
+  get_url:
+    url: "{{ veracrypt_download_page_url }}"
+    dest: "{{ veracrypt_install_dir.path }}/download_page.html"
+  tags:
+    - veracrypt_install
+
+- name: "Detect most recent download file"
+  set_fact:
+    veracrypt_download_file: "{{ lookup('file', veracrypt_install_dir.path + '/download_page.html') | regex_search('(https://[^\"]{,50}veracrypt\\-.*[0-9]\\-setup\\.tar\\.bz2)') }}"
   tags:
     - veracrypt_install
 
 - name: "Compose filename"
-  shell: url="{{ veracrypt_download_file.stdout }}"; echo "${url##*/}"
-  register: veracrypt_installer_filename
-  tags:
-    - veracrypt_install
-
-- name: "Create work dir"
-  file:
-    path: "{{ veracrypt_install_dir }}"
-    state: directory
+  set_fact:
+    veracrypt_installer_filename: "{{ veracrypt_download_file.split('/') | last }}"
   tags:
     - veracrypt_install
 
 - name: "Download VeraCrypt"
   get_url:
-    url: "{{ veracrypt_download_file.stdout }}"
-    dest: "{{ veracrypt_install_dir}}/{{ veracrypt_installer_filename.stdout }}"
+    url: "{{ veracrypt_download_file }}"
+    dest: "{{ veracrypt_install_dir.path}}/{{ veracrypt_installer_filename }}"
   tags:
     - veracrypt_install
 
 - name: "Uncompress installer"
   unarchive:
-    src: "{{ veracrypt_install_dir}}/{{ veracrypt_installer_filename.stdout }}"
-    dest: "{{ veracrypt_install_dir}}"
+    src: "{{ veracrypt_install_dir.path}}/{{ veracrypt_installer_filename }}"
+    dest: "{{ veracrypt_install_dir.path}}"
     remote_src: True
   tags:
     - veracrypt_install
 
 - name: "Detect installer file"
-  shell: "ls {{ veracrypt_install_dir}}/veracrypt-*-setup-gui-x64 | tail -n 1"
+  shell: "ls {{ veracrypt_install_dir.path}}/veracrypt-*-setup-gui-x64 | tail -n 1"
   register: veracrypt_installer_script
   tags:
     - veracrypt_install
@@ -48,7 +55,7 @@
 
 - name: "Delete work dir"
   file:
-    path: "{{ veracrypt_install_dir }}"
+    path: "{{ veracrypt_install_dir.path }}"
     state: absent
   tags:
     - veracrypt_install
