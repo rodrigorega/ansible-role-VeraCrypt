@@ -1,7 +1,7 @@
 VeraCrypt
 =========
 
-Install VeraCrypt in Debian Jessie.
+Install VeraCrypt in Debian 10 "Buster"
 
 Requirements
 ------------
@@ -37,4 +37,4 @@ Author Information
 ------------------
 
 - You can contact me at rodrigorega@gmail.com
-- My website: http://rodrigorega.es
+- My website: https://rodrigorega.es
