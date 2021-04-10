@@ -4,6 +4,7 @@
 - name: "Compose download URL"
   shell: curl -s -L https://launchpad.net/veracrypt/+download | egrep -i "title.*trunk.*debian\-10\-amd64\.deb.*" | egrep -v "console" | head -n1 | egrep -o "href\=\".*\.deb\"" | awk -F\" '{print $2}'
   register: veracrypt_url
+  changed_when: false
   tags:
     - veracrypt_install
 
